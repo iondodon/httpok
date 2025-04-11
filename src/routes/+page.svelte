@@ -7,9 +7,9 @@
 
   let editorContainer: HTMLElement;
   let editor: monaco.editor.IStandaloneCodeEditor;
-  const defaultText = `print Hello World
-  print This is a simple language
-  print Each line starts with print`;
+  const defaultText = `GET https://jsonplaceholder.typicode.com/posts/1
+Accept: application/json
+Authorization: Bearer test123`;
   let text = defaultText;
   let output: string[] = [];
 
@@ -52,10 +52,10 @@
     editor?.dispose();
   });
 
-  function logInput(event: Event) {
+  async function logInput(event: Event) {
     event.preventDefault();
     try {
-      output = languageService.execute(text);
+      output = await languageService.execute(text); // ✅ wait for the result
       console.log("Execution output:", output);
     } catch (error) {
       console.error("Error executing code:", error);
