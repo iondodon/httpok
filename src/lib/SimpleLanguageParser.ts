@@ -12,6 +12,8 @@ import {
 	Interval, IntervalSet
 } from 'antlr4';
 import SimpleLanguageListener from "./SimpleLanguageListener.js";
+import SimpleLanguageVisitor from "./SimpleLanguageVisitor.js";
+
 // for running tests with parameters, TODO: discuss strategy for typed parameters in CI
 // eslint-disable-next-line no-unused-vars
 type int = number;
@@ -218,6 +220,14 @@ export class ProgramContext extends ParserRuleContext {
 	 		listener.exitProgram(this);
 		}
 	}
+	// @Override
+	public accept<Result>(visitor: SimpleLanguageVisitor<Result>): Result {
+		if (visitor.visitProgram) {
+			return visitor.visitProgram(this);
+		} else {
+			return visitor.visitChildren(this);
+		}
+	}
 }
 
 
@@ -240,6 +250,14 @@ export class StatementContext extends ParserRuleContext {
 	public exitRule(listener: SimpleLanguageListener): void {
 	    if(listener.exitStatement) {
 	 		listener.exitStatement(this);
+		}
+	}
+	// @Override
+	public accept<Result>(visitor: SimpleLanguageVisitor<Result>): Result {
+		if (visitor.visitStatement) {
+			return visitor.visitStatement(this);
+		} else {
+			return visitor.visitChildren(this);
 		}
 	}
 }
@@ -266,6 +284,14 @@ export class PrintStatementContext extends ParserRuleContext {
 	 		listener.exitPrintStatement(this);
 		}
 	}
+	// @Override
+	public accept<Result>(visitor: SimpleLanguageVisitor<Result>): Result {
+		if (visitor.visitPrintStatement) {
+			return visitor.visitPrintStatement(this);
+		} else {
+			return visitor.visitChildren(this);
+		}
+	}
 }
 
 
@@ -288,6 +314,14 @@ export class ExpressionContext extends ParserRuleContext {
 	public exitRule(listener: SimpleLanguageListener): void {
 	    if(listener.exitExpression) {
 	 		listener.exitExpression(this);
+		}
+	}
+	// @Override
+	public accept<Result>(visitor: SimpleLanguageVisitor<Result>): Result {
+		if (visitor.visitExpression) {
+			return visitor.visitExpression(this);
+		} else {
+			return visitor.visitChildren(this);
 		}
 	}
 }
