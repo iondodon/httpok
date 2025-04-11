@@ -6,10 +6,14 @@
   import { SimpleLanguageService } from "../lib/SimpleLanguageService";
 
   let editorContainer: HTMLElement;
+  let outputEditorContainer: HTMLElement;
   let editor: monaco.editor.IStandaloneCodeEditor;
+  let outputEditor: monaco.editor.IStandaloneCodeEditor;
+
   const defaultText = `GET https://jsonplaceholder.typicode.com/posts/1
 Accept: application/json
 Authorization: Bearer test123`;
+
   let text = defaultText;
   let output: string[] = [];
 
@@ -33,16 +37,32 @@ Authorization: Bearer test123`;
         automaticLayout: true,
         fontSize: 14,
         minimap: { enabled: false },
-        padding: { top: 10, bottom: 10 },
         scrollBeyondLastLine: false,
         wordWrap: "on",
+        padding: { top: 10, bottom: 10 },
+      });
+
+      outputEditor = monaco.editor.create(outputEditorContainer, {
+        value: "",
+        language: "plaintext",
+        readOnly: true,
+        theme: "vs-dark",
+        automaticLayout: true,
+        fontSize: 14,
+        minimap: { enabled: false },
+        scrollBeyondLastLine: false,
+        wordWrap: "on",
+        padding: { top: 10, bottom: 10 },
       });
 
       editor.onDidChangeModelContent(() => {
         text = editor.getValue();
       });
 
-      requestAnimationFrame(() => editor.layout());
+      requestAnimationFrame(() => {
+        editor.layout();
+        outputEditor.layout();
+      });
     } catch (err) {
       console.error("Editor init error:", err);
     }
@@ -50,31 +70,41 @@ Authorization: Bearer test123`;
 
   onDestroy(() => {
     editor?.dispose();
+    outputEditor?.dispose();
   });
+
+  let loading = false;
 
   async function logInput(event: Event) {
     event.preventDefault();
+    loading = true;
     try {
-      output = await languageService.execute(text); // ✅ wait for the result
-      console.log("Execution output:", output);
+      output = await languageService.execute(text);
+      const outputText = output.join("\n");
+      outputEditor.setValue(outputText);
     } catch (error) {
       console.error("Error executing code:", error);
+    } finally {
+      loading = false;
     }
   }
 </script>
 
 <main>
   <form on:submit={logInput}>
-    <div class="editor-container" bind:this={editorContainer}></div>
+    <div class="editor-wrapper">
+      <div class="editor-container" bind:this={editorContainer}></div>
+
+      <div class="editor-container output-editor-wrapper">
+        <div class="loading-overlay" class:visible={loading}>
+          ⏳ Executing request...
+        </div>
+        <div bind:this={outputEditorContainer} class="output-editor"></div>
+      </div>
+    </div>
+
     <button type="submit">Execute</button>
   </form>
-  {#if output.length > 0}
-    <div class="output">
-      {#each output as line}
-        <div>{line}</div>
-      {/each}
-    </div>
-  {/if}
 </main>
 
 <style>
@@ -86,28 +116,55 @@ Authorization: Bearer test123`;
   }
 
   form {
-    width: 90%;
-    max-width: 800px;
+    width: 95%;
+    max-width: 1200px;
     display: flex;
     flex-direction: column;
     gap: 1rem;
   }
 
-  .editor-container {
+  .editor-wrapper {
+    display: flex;
+    gap: 1rem;
     width: 100%;
+  }
+
+  .output-editor-wrapper {
+    position: relative;
+  }
+
+  .output-editor {
+    width: 100%;
+    height: 100%;
+  }
+
+  .loading-overlay {
+    position: absolute;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.6);
+    color: white;
+    font-size: 1.1rem;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 10;
+    border-radius: 8px;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s ease;
+  }
+
+  .loading-overlay.visible {
+    opacity: 1;
+    pointer-events: all;
+  }
+
+  .editor-container {
+    flex: 1;
     height: 400px;
     border: 1px solid #ccc;
     border-radius: 8px;
     overflow: hidden;
-  }
-
-  .output {
-    margin-top: 1rem;
-    padding: 1rem;
-    background: #f5f5f5;
-    border-radius: 8px;
-    width: 90%;
-    max-width: 800px;
   }
 
   button {
@@ -128,11 +185,6 @@ Authorization: Bearer test123`;
   @media (prefers-color-scheme: dark) {
     .editor-container {
       border-color: #333;
-    }
-
-    .output {
-      background: #333;
-      color: #fff;
     }
 
     button {
