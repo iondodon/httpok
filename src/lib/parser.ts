@@ -1,21 +1,22 @@
 import { CstParser } from "chevrotain";
-import { Print, StringLiteral, Semicolon, allTokens } from "./tokens";
+import { allTokens, Get, Url, Header, Newline } from "./tokens";
 
-export class SimpleParser extends CstParser {
+export class HttpParser extends CstParser {
   constructor() {
     super(allTokens);
     this.performSelfAnalysis();
   }
 
   public program = this.RULE("program", () => {
-    this.MANY(() => {
-      this.SUBRULE(this.printStatement);
-    });
+    this.MANY(() => this.SUBRULE(this.httpGet));
   });
 
-  private printStatement = this.RULE("printStatement", () => {
-    this.CONSUME(Print);
-    this.CONSUME(StringLiteral);
-    this.CONSUME(Semicolon);
+  private httpGet = this.RULE("httpGet", () => {
+    this.CONSUME(Get);
+    this.CONSUME(Url);
+    this.MANY(() => {
+      this.CONSUME(Newline);
+      this.OPTION(() => this.CONSUME(Header));
+    });
   });
 }

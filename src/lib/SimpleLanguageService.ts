@@ -1,9 +1,9 @@
 import { execute } from "./interpreter";
 
 export class SimpleLanguageService {
-  execute(code: string): string[] {
+  async execute(code: string): Promise<string[]> {
     try {
-      return execute(code);
+      return await execute(code);
     } catch (e) {
       console.error("Execution error:", e);
       return [`ERROR: ${e instanceof Error ? e.message : String(e)}`];
