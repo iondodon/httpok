@@ -76,10 +76,22 @@ Authorization: Bearer test123`;
       const selected =
         selection && model ? model.getValueInRange(selection).trim() : "";
 
-      const toExecute = selected || editor.getValue().trim();
-      const result = await languageService.execute(toExecute);
-      outputEditor.setValue(result.join("\n"));
+      const code = selected || editor.getValue().trim();
+      const response = await languageService.execute(code);
+
+      const raw = {
+        status: response.status,
+        statusText: response.statusText,
+        headers: Object.fromEntries(response.headers.entries()),
+        url: response.url,
+        redirected: response.redirected,
+        ok: response.ok,
+        body: response.bodyParsed,
+      };
+
+      outputEditor.setValue(JSON.stringify(raw, null, 2));
     } catch (err) {
+      outputEditor.setValue(`❌ Error:\n${err}`);
       console.error(err);
     } finally {
       loading = false;
