@@ -1,0 +1,12 @@
+* {
+    padding: 0%;
+    margin: 0%;
+    border: 0%;
+    box-sizing: border-box;
+    font-family: inherit;
+}
+
+html, body, #app {
+    width: 100%;
+    height: 100%;
+}

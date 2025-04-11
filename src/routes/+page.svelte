@@ -132,48 +132,54 @@ Authorization: Bearer test123`;
 </script>
 
 <main>
-  <form on:submit={logInput}>
-    <div class="resizable" bind:this={resizableContainer}>
-      <div class="left-pane" bind:this={editorContainer}></div>
-      <div class="drag-handle" on:mousedown={onMouseDown}></div>
-      <div class="right-pane" bind:this={outputEditorContainer}></div>
-    </div>
+  <div class="resizable" bind:this={resizableContainer}>
+    <div class="left-pane" bind:this={editorContainer}></div>
+    <div class="drag-handle" on:mousedown={onMouseDown}></div>
+    <div class="right-pane" bind:this={outputEditorContainer}></div>
+  </div>
 
-    <div class="actions">
-      <button type="submit" disabled={loading}>
-        {#if loading}
-          ⏳ Executing...
-        {:else}
-          ▶ Execute
-        {/if}
-      </button>
-    </div>
-  </form>
+  <div class="actions">
+    <button on:click={logInput} disabled={loading}>
+      {#if loading}
+        ⏳ Executing...
+      {:else}
+        ▶ Execute
+      {/if}
+    </button>
+  </div>
 </main>
 
 <style>
-  main {
-    padding: 2rem;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
+  * {
+    padding: 0%;
+    margin: 0%;
+    border: 0%;
+    box-sizing: border-box;
+    font-family: inherit;
   }
 
-  form {
+  html,
+  body {
+    margin: 0;
+    padding: 0;
+    height: 100%;
     width: 100%;
-    max-width: 1200px;
+    overflow: hidden;
+  }
+
+  main {
+    height: 100vh;
+    width: 100vw;
     display: flex;
     flex-direction: column;
-    gap: 1rem;
   }
 
   .resizable {
+    flex: 1; /* take all vertical space above button */
     display: flex;
     width: 100%;
-    height: 400px;
     position: relative;
     overflow: hidden;
-    border-radius: 8px;
   }
 
   .left-pane,
@@ -195,18 +201,31 @@ Authorization: Bearer test123`;
   }
 
   .actions {
-    display: flex;
-    justify-content: flex-end;
+    height: 60px;
+    width: 100%;
+    padding: 0;
+    margin: 0;
+    border-top: 1px solid #333;
   }
 
-  button {
-    padding: 0.6rem 1.2rem;
-    font-size: 1rem;
+  .actions button {
+    width: 100%;
+    height: 100%;
+    font-size: 1.2rem;
     background: #444;
     color: white;
     border: none;
-    border-radius: 6px;
+    border-radius: 0;
     cursor: pointer;
+  }
+
+  .actions button:hover:enabled {
+    background: #555;
+  }
+
+  .actions button:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
   }
 
   button:disabled {
@@ -219,6 +238,10 @@ Authorization: Bearer test123`;
   }
 
   @media (prefers-color-scheme: dark) {
+    .actions {
+      background-color: #111;
+    }
+
     .drag-handle {
       background-color: #444;
     }
