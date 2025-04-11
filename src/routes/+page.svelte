@@ -76,7 +76,7 @@ Authorization: Bearer test123`;
       const selected =
         selection && model ? model.getValueInRange(selection).trim() : "";
 
-      const code = selected || editor.getValue().trim();
+      const code = selected || editor.getValue();
       const response = await languageService.execute(code);
 
       const raw = {

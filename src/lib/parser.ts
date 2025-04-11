@@ -1,22 +1,31 @@
-import { CstParser } from "chevrotain";
-import { allTokens, Get, Url, Header, Newline } from "./tokens";
+import { CstParser, EOF } from "chevrotain";
+import { allTokens, Method, Url, Header, Newline } from "./lexer";
 
 export class HttpParser extends CstParser {
+  [x: string]: any;
   constructor() {
     super(allTokens);
+    const $ = this;
+
+    $.RULE("program", () => {
+      $.MANY(() => {
+        $.SUBRULE($.httpRequest);
+      });
+      $.OPTION(() => $.CONSUME(EOF));
+    });
+
+    $.RULE("httpRequest", () => {
+      $.CONSUME(Method);
+      $.CONSUME(Url);
+
+      $.MANY(() => {
+        $.CONSUME(Newline);
+        $.OPTION(() => {
+          $.CONSUME(Header);
+        });
+      });
+    });
+
     this.performSelfAnalysis();
   }
-
-  public program = this.RULE("program", () => {
-    this.MANY(() => this.SUBRULE(this.httpGet));
-  });
-
-  private httpGet = this.RULE("httpGet", () => {
-    this.CONSUME(Get);
-    this.CONSUME(Url);
-    this.MANY(() => {
-      this.CONSUME(Newline);
-      this.OPTION(() => this.CONSUME(Header));
-    });
-  });
 }

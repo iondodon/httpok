@@ -1,10 +1,11 @@
-import { SimpleLexer } from "./tokens";
+import { SimpleLexer } from "./lexer";
 import { HttpParser } from "./parser";
 
 const parser = new HttpParser();
 const BaseVisitor = parser.getBaseCstVisitorConstructorWithDefaults();
 
-class Interpreter extends BaseVisitor {
+class Visitor extends BaseVisitor {
+  [x: string]: any;
   output: string[] = [];
 
   constructor() {
@@ -12,12 +13,14 @@ class Interpreter extends BaseVisitor {
   }
 
   async program(ctx: any) {
-    for (const call of ctx.httpGet || []) {
-      await this.visit(call as any); // cast to avoid TS error
+    debugger
+    for (const request of ctx.httpRequest || []) {
+      await this.visit(request as any); // cast to avoid TS error
     }
   }
 
-  async httpGet(ctx: any) {
+  async httpRequest(ctx: any) {
+    debugger
     const url = ctx.Url[0].image;
     const headers: Record<string, string> = {};
 
@@ -45,10 +48,11 @@ export async function execute(code: string): Promise<string[]> {
 
   const cst = parser.program();
   if (parser.errors.length > 0) {
+    console.log(parser.errors)
     throw new Error("Parsing error");
   }
 
-  const interpreter = new Interpreter();
-  await (interpreter as any).visit(cst); // 👈 avoids TS complaint
-  return interpreter.output;
+  const visitor = new Visitor();
+  const out = await visitor.visit(cst); // 👈 avoids TS complaint
+  return visitor.output;
 }
