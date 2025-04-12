@@ -86,4 +86,4 @@ httpok/
 
 ## License
 
-MIT © 2025 Ion Dodon
+httpok is licensed under [GPLv3](https://github.com/iondodon/httpok/blob/main/LICENCE.txt).
