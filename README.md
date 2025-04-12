@@ -86,4 +86,4 @@ httpok/
 
 ## License
 
-httpok is licensed under [GPLv3](https://github.com/iondodon/httpok/blob/main/LICENCE.txt).
+httpok is licensed under [GPLv3](https://github.com/iondodon/httpok/blob/main/LICENSE.txt) @ Ion Dodon 2025.
