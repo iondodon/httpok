@@ -79,9 +79,3 @@ httpok/
 ## License
 
 MIT © 2025 Ion Dodon
-
----
-
-## Acknowledgements
-
-Inspired by the simplicity of tools like Hoppscotch and the power of desktop apps with Tauri.

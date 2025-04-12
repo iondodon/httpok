@@ -122,8 +122,12 @@ Authorization: Bearer test123`;
       ".right-pane"
     ) as HTMLDivElement;
 
-    left.style.width = `${leftWidth}px`;
-    right.style.width = `${rightWidth}px`;
+    const totalFlex = leftWidth + rightWidth;
+    const leftFlex = leftWidth / totalFlex;
+    const rightFlex = rightWidth / totalFlex;
+
+    left.style.flex = `${leftFlex}`;
+    right.style.flex = `${rightFlex}`;
 
     editor?.layout();
     outputEditor?.layout();
@@ -156,23 +160,6 @@ Authorization: Bearer test123`;
 </main>
 
 <style>
-  * {
-    padding: 0%;
-    margin: 0%;
-    border: 0%;
-    box-sizing: border-box;
-    font-family: inherit;
-  }
-
-  html,
-  body {
-    margin: 0;
-    padding: 0;
-    height: 100%;
-    width: 100%;
-    overflow: hidden;
-  }
-
   main {
     height: 100vh;
     width: 100vw;
@@ -191,7 +178,7 @@ Authorization: Bearer test123`;
   .left-pane,
   .right-pane {
     height: 100%;
-    width: 50%;
+    flex: 1; /* base fallback */
     overflow: hidden;
   }
 

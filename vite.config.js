@@ -13,7 +13,6 @@ export default defineConfig(() => ({
   plugins: [
     sveltekit(),
     monacoPlugin({
-      // 👇 You must include this for core editor functionality
       languageWorkers: ["editorWorkerService", "json"],
     }),
   ],
