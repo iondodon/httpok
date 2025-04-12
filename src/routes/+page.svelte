@@ -1,9 +1,20 @@
 <script lang="ts">
   import { onMount, onDestroy } from "svelte";
   import * as monaco from "monaco-editor";
-  import loader from "@monaco-editor/loader";
   import { registerMyLanguage } from "../lib/myLanguage";
   import { SimpleLanguageService } from "../lib/SimpleLanguageService";
+  import EditorWorker from "monaco-editor/esm/vs/editor/editor.worker?worker";
+  import JsonWorker from "monaco-editor/esm/vs/language/json/json.worker?worker";
+
+  // This must be before using monaco
+  // Must be global before any monaco.editor.create
+  // @ts-ignore
+  self.MonacoEnvironment = {
+    getWorker(_: any, label: string) {
+      if (label === "json") return new JsonWorker();
+      return new EditorWorker(); // for everything else (custom languages too)
+    },
+  };
 
   let editorContainer: HTMLElement;
   let outputEditorContainer: HTMLElement;
@@ -20,13 +31,6 @@ Authorization: Bearer test123`;
   let loading = false;
 
   onMount(async () => {
-    loader.config({
-      paths: {
-        vs: "node_modules/monaco-editor/min/vs",
-      },
-    });
-
-    await loader.init();
     registerMyLanguage();
 
     editor = monaco.editor.create(editorContainer, {
