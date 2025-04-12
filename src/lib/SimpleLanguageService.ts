@@ -12,7 +12,6 @@ export class SimpleLanguageService {
       const respData = await this.fetchWithFullResponse(request)
       const end = performance.now();
       const duration = end - start;
-      console.log(respData)
       responses.push({ duration, ...respData })
     }
 

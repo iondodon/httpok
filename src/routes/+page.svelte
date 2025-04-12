@@ -22,7 +22,7 @@ Authorization: Bearer test123`;
   onMount(async () => {
     loader.config({
       paths: {
-        vs: "https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.45.0/min/vs",
+        vs: "node_modules/monaco-editor/min/vs",
       },
     });
 
@@ -43,7 +43,7 @@ Authorization: Bearer test123`;
 
     outputEditor = monaco.editor.create(outputEditorContainer, {
       value: "",
-      language: "plaintext",
+      language: "json",
       readOnly: true,
       theme: "vs-dark",
       automaticLayout: true,
