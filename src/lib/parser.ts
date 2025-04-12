@@ -1,10 +1,11 @@
 import { CstParser, EOF } from "chevrotain";
-import { allTokens, Method, Url, Header, Newline } from "./lexer";
+import { allTokens, Method, Url, Header, Newline } from "./lexer.js"; // make sure extension matches your setup
 
 export class HttpParser extends CstParser {
   [x: string]: any;
   constructor() {
     super(allTokens);
+
     const $ = this;
 
     $.RULE("program", () => {

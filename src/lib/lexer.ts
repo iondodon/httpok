@@ -29,5 +29,6 @@ export const WhiteSpace = createToken({
 });
 
 export const allTokens = [WhiteSpace, Method, Url, Header, Newline];
+
 export const SimpleLexer = new Lexer(allTokens);
 

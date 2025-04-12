@@ -77,19 +77,9 @@ Authorization: Bearer test123`;
         selection && model ? model.getValueInRange(selection).trim() : "";
 
       const code = selected || editor.getValue();
-      const response = await languageService.execute(code);
+      const responses = await languageService.execute(code);
 
-      const raw = {
-        status: response.status,
-        statusText: response.statusText,
-        headers: Object.fromEntries(response.headers.entries()),
-        url: response.url,
-        redirected: response.redirected,
-        ok: response.ok,
-        body: response.bodyParsed,
-      };
-
-      outputEditor.setValue(JSON.stringify(raw, null, 2));
+      outputEditor.setValue(JSON.stringify(responses, null, 2));
     } catch (err) {
       outputEditor.setValue(`❌ Error:\n${err}`);
       console.error(err);
