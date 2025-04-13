@@ -1,10 +1,6 @@
 import { defineConfig } from "vite";
 import { sveltekit } from "@sveltejs/kit/vite";
-import monaco from "vite-plugin-monaco-editor";
-
-// Support both ESM and CJS
-// @ts-ignore
-const monacoPlugin = monaco.default || monaco;
+import { viteStaticCopy } from 'vite-plugin-static-copy';
 
 // @ts-expect-error process is a nodejs global
 const host = process.env.TAURI_DEV_HOST;
@@ -12,8 +8,13 @@ const host = process.env.TAURI_DEV_HOST;
 export default defineConfig(() => ({
   plugins: [
     sveltekit(),
-    monacoPlugin({
-      languageWorkers: ["editorWorkerService", "json"],
+    viteStaticCopy({
+      targets: [
+        {
+          src: 'node_modules/monaco-editor/min',
+          dest: 'monaco-editor',
+        },
+      ],
     }),
   ],
   clearScreen: false,

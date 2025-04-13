@@ -16,18 +16,18 @@
     "@monaco-editor/loader": "^1.5.0",
     "@tauri-apps/api": "^2",
     "@tauri-apps/plugin-opener": "^2",
-    "chevrotain": "^11.0.3",
-    "monaco-editor": "^0.52.2"
+    "chevrotain": "^11.0.3"
   },
   "devDependencies": {
     "@sveltejs/adapter-static": "^3.0.6",
     "@sveltejs/kit": "^2.9.0",
     "@sveltejs/vite-plugin-svelte": "^5.0.0",
     "@tauri-apps/cli": "^2",
+    "monaco-editor": "^0.52.2",
     "svelte": "^5.0.0",
     "svelte-check": "^4.0.0",
     "typescript": "~5.6.2",
     "vite": "^6.0.3",
-    "vite-plugin-monaco-editor": "^1.1.0"
+    "vite-plugin-static-copy": "^2.3.1"
   }
 }
