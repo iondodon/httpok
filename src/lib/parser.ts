@@ -1,5 +1,5 @@
 import { CstParser, EOF } from "chevrotain";
-import { allTokens, Method, Url, Header, Newline } from "./lexer.js"; // make sure extension matches your setup
+import { allTokens, Method, Url, BodyLine, Header, Newline } from "./lexer.js"; // make sure extension matches your setup
 
 export class HttpParser extends CstParser {
   [x: string]: any;
@@ -18,14 +18,26 @@ export class HttpParser extends CstParser {
     $.RULE("httpRequest", () => {
       $.CONSUME(Method);
       $.CONSUME(Url);
-
+      $.CONSUME(Newline);
+    
       $.MANY(() => {
-        $.CONSUME(Newline);
-        $.OPTION(() => {
-          $.CONSUME(Header);
-        });
+        $.CONSUME(Header);
+        $.CONSUME2(Newline);
       });
-    });
+    
+      $.MANY3(() => {
+        $.CONSUME3(Newline);
+      });
+    
+      $.MANY4(() => {
+        $.CONSUME(BodyLine);
+        $.OPTION(() => $.CONSUME4(Newline));
+      });
+    
+      $.MANY5(() => {
+        $.CONSUME5(Newline);
+      });
+    }); 
 
     this.performSelfAnalysis();
   }

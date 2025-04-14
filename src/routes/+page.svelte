@@ -26,7 +26,18 @@
   const languageService = new SimpleLanguageService();
   const defaultText = `GET https://jsonplaceholder.typicode.com/posts/1
 Accept: application/json
-Authorization: Bearer test123`;
+Authorization: Bearer test123
+|test1
+|test2
+
+POST https://jsonplaceholder.typicode.com/posts
+Content-Type: application/json
+
+|{
+|  "title": "foo",
+|  "body": "bar",
+|  "userId": 1
+|}`;
 
   let loading = false;
 

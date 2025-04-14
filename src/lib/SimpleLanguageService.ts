@@ -1,4 +1,3 @@
-import { defaultLexerErrorProvider } from 'chevrotain';
 import { parseRequests } from './visitor'
 
 export class SimpleLanguageService {

@@ -10,6 +10,12 @@ export const Url = createToken({
   pattern: /https?:\/\/[^\s]+/,
 });
 
+export const BodyLine = createToken({
+  name: "BodyLine",
+  pattern: /\|[^\n\r]*/,
+  line_breaks: false,
+});
+
 export const Header = createToken({
   name: "Header",
   pattern: /[A-Za-z0-9\-]+:\s*[^\n\r]+/,
@@ -28,7 +34,7 @@ export const WhiteSpace = createToken({
   group: Lexer.SKIPPED,
 });
 
-export const allTokens = [WhiteSpace, Method, Url, Header, Newline];
+export const allTokens = [WhiteSpace, Method, Url, BodyLine, Header, Newline];
 
 export const SimpleLexer = new Lexer(allTokens);
 
