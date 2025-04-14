@@ -1,7 +1,7 @@
 <script lang="ts">
   import { onMount, onDestroy } from "svelte";
   import * as monaco from "monaco-editor";
-  import { registerMyLanguage } from "../lib/myLanguage";
+  import { registerHttpokLanguage } from "../lib/myLanguage";
   import { SimpleLanguageService } from "../lib/SimpleLanguageService";
   import EditorWorker from "monaco-editor/esm/vs/editor/editor.worker?worker";
   import JsonWorker from "monaco-editor/esm/vs/language/json/json.worker?worker";
@@ -25,10 +25,12 @@
 
   const languageService = new SimpleLanguageService();
   const defaultText = `
-# Comments are allowed after the first request, between requests and after the last request.
-# Empty lines are not allowes between headers adn between URL line and first defined header.
-# Empty lines are allowed between last defined header for the request and the request body.
-# The lines defining the request body should start with |.
+# httok https://github.com/iondodon/httpok licensed under GPLv3
+#
+# Comments are allowed after the first request, between requests, and after the last request.
+# Empty lines are not allowed between headers or between the URL line and the first defined header.
+# Empty lines are allowed between the last defined header of a request and its body.
+# Lines defining the request body should start with a '|'.
 #
 # Examples:
 # GET https://jsonplaceholder.typicode.com/posts/1
@@ -42,16 +44,31 @@
 # |  "body": "bar",
 # |  "userId": 1
 # |}
+#
+# Highlight the request or requests you want to execute, then click Execute.
+# If nothing is highlighted, all requests will be executed one after another.
+
+GET https://jsonplaceholder.typicode.com/posts/1
+Accept: application/json
+Authorization: Bearer test123
+
+POST https://jsonplaceholder.typicode.com/posts
+Content-Type: application/json
+|{
+|  "title": "foo",
+|  "body": "bar",
+|  "userId": 1
+|}
   `;
 
   let loading = false;
 
   onMount(async () => {
-    registerMyLanguage();
+    registerHttpokLanguage();
 
     editor = monaco.editor.create(editorContainer, {
       value: defaultText,
-      language: "myLanguage",
+      language: "httpok",
       theme: "vs-dark",
       automaticLayout: true,
       fontSize: 14,
