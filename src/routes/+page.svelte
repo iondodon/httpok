@@ -24,20 +24,25 @@
   let outputEditor: monaco.editor.IStandaloneCodeEditor;
 
   const languageService = new SimpleLanguageService();
-  const defaultText = `GET https://jsonplaceholder.typicode.com/posts/1
-Accept: application/json
-Authorization: Bearer test123
-|test1
-|test2
-
-POST https://jsonplaceholder.typicode.com/posts
-Content-Type: application/json
-
-|{
-|  "title": "foo",
-|  "body": "bar",
-|  "userId": 1
-|}`;
+  const defaultText = `
+# Comments are allowed after the first request, between requests and after the last request.
+# Empty lines are not allowes between headers adn between URL line and first defined header.
+# Empty lines are allowed between last defined header for the request and the request body.
+# The lines defining the request body should start with |.
+#
+# Examples:
+# GET https://jsonplaceholder.typicode.com/posts/1
+# Accept: application/json
+# Authorization: Bearer test123
+#
+# POST https://jsonplaceholder.typicode.com/posts
+# Content-Type: application/json
+# |{
+# |  "title": "foo",
+# |  "body": "bar",
+# |  "userId": 1
+# |}
+  `;
 
   let loading = false;
 

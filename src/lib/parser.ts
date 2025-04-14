@@ -1,5 +1,5 @@
 import { CstParser, EOF } from "chevrotain";
-import { allTokens, Method, Url, BodyLine, Header, Newline } from "./lexer.js"; // make sure extension matches your setup
+import { allTokens, Method, Comment, Url, BodyLine, Header, Newline } from "./lexer.js"; // make sure extension matches your setup
 
 export class HttpParser extends CstParser {
   [x: string]: any;
@@ -8,34 +8,56 @@ export class HttpParser extends CstParser {
 
     const $ = this;
 
+    $.RULE("commentBlock", () => {
+      $.AT_LEAST_ONE(() => {
+        $.CONSUME(Comment);
+        $.OPTION(() => $.CONSUME(Newline));
+      });
+    });
+
     $.RULE("program", () => {
       $.MANY(() => {
         $.SUBRULE($.httpRequest);
       });
+
+      $.MANY8(() => {
+        $.OR([
+          { ALT: () => $.SUBRULE8($.commentBlock) },
+          { ALT: () => $.CONSUME8(Newline) }
+        ]);
+      });
+
       $.OPTION(() => $.CONSUME(EOF));
     });
 
     $.RULE("httpRequest", () => {
-      $.CONSUME(Method);
-      $.CONSUME(Url);
-      $.CONSUME(Newline);
-    
       $.MANY(() => {
-        $.CONSUME(Header);
-        $.CONSUME2(Newline);
+        $.OR([
+          { ALT: () => $.SUBRULE($.commentBlock) },
+          { ALT: () => $.CONSUME(Newline) }
+        ]);
       });
-    
-      $.MANY3(() => {
-        $.CONSUME3(Newline);
-      });
+
+      $.CONSUME1(Method);
+      $.CONSUME2(Url);
+      $.CONSUME3(Newline);
     
       $.MANY4(() => {
-        $.CONSUME(BodyLine);
-        $.OPTION(() => $.CONSUME4(Newline));
+        $.CONSUME4(Header);
+        $.CONSUME4(Newline);
       });
     
       $.MANY5(() => {
         $.CONSUME5(Newline);
+      });
+    
+      $.MANY6(() => {
+        $.CONSUME6(BodyLine);
+        $.OPTION(() => $.CONSUME6(Newline));
+      });
+    
+      $.MANY7(() => {
+        $.CONSUME7(Newline);
       });
     }); 
 

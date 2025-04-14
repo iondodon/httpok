@@ -1,5 +1,11 @@
 import { createToken, Lexer } from "chevrotain";
 
+export const Comment = createToken({
+  name: "Comment",
+  pattern: /#[^\n\r]*/,
+  line_breaks: false,
+});
+
 export const Method = createToken({
   name: "Method",
   pattern: /GET|POST|PUT|DELETE|PATCH|OPTIONS|HEAD/,
@@ -34,7 +40,7 @@ export const WhiteSpace = createToken({
   group: Lexer.SKIPPED,
 });
 
-export const allTokens = [WhiteSpace, Method, Url, BodyLine, Header, Newline];
+export const allTokens = [WhiteSpace, Comment, Method, Url, BodyLine, Header, Newline];
 
 export const SimpleLexer = new Lexer(allTokens);
 
