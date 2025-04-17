@@ -1,16 +1,27 @@
 // Learn more about Tauri commands at https://tauri.app/develop/calling-rust/
 
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 
+#[derive(Deserialize)]
+pub struct HttpOkRequest {
+    pub method: String,
+    pub url: String,
+    pub headers: Option<HashMap<String, String>>,
+    pub body: Option<String>,
+}
+
 #[derive(Serialize)]
-pub struct ResponseData {
-    status: u16,
-    status_text: String,
-    url: String,
-    ok: bool,
-    headers: HashMap<String, String>,
-    body: String,
+pub struct HttpOkFullResponse {
+    pub status: u16,
+
+    #[serde(rename = "statusText")]
+    pub status_text: String,
+
+    pub url: String,
+    pub ok: bool,
+    pub headers: HashMap<String, String>,
+    pub body: String,
 }
 
 #[tauri::command]
@@ -19,26 +30,18 @@ fn greet(name: &str) -> String {
 }
 
 #[tauri::command]
-async fn fetch_with_full_response(
-    method: String,
-    url: String,
-    headers: Option<HashMap<String, String>>,
-    body: Option<String>,
-) -> Result<ResponseData, String> {
+async fn fetch_with_full_response(request: HttpOkRequest) -> Result<HttpOkFullResponse, String> {
     let client = reqwest::Client::new();
-    let method = method.parse().unwrap_or(reqwest::Method::GET);
-    let mut req = client.request(method, &url);
+    let method = request.method.parse().unwrap_or(reqwest::Method::GET);
+    let mut req = client.request(method, &request.url);
 
-    if let Some(hdrs) = headers {
-        for (k, v) in hdrs {
+    if let Some(headers) = request.headers {
+        for (k, v) in headers {
             req = req.header(k, v);
         }
     }
 
-    println!("Request: {:?}", req);
-
-    if let Some(body) = body {
-        println!("Body: {}", body);
+    if let Some(body) = request.body {
         req = req.body(body);
     }
 
@@ -56,7 +59,7 @@ async fn fetch_with_full_response(
 
     let body = res.text().await.map_err(|e| e.to_string())?;
 
-    Ok(ResponseData {
+    Ok(HttpOkFullResponse {
         status,
         status_text,
         url,

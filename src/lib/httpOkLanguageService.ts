@@ -22,11 +22,19 @@ export class HttpOkLanguageService {
 
   async fetchWithFullResponse(request: HttpOkRequest): Promise<any> {
     const response: HttpOkFullResponse = await invoke('fetch_with_full_response', {
-      method: request.method,
-      url: request.url,
-      headers: request.headers ?? {},
-      body: request.body ? String(request.body) : null,
+      request: request.toSerializable()
     });
+
+    const contentType = response.headers['content-type']?.toLowerCase();
+
+    if (contentType?.includes('application/json')) {
+      try {
+        response.body = JSON.parse(response.body);
+      } catch (e) {
+        console.warn('Invalid JSON body despite application/json header');
+        // Leave body as string
+      }
+    }
 
     return response;
   }
