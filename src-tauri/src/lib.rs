@@ -19,17 +19,18 @@ fn greet(name: &str) -> String {
 }
 
 #[tauri::command]
-fn fetch_with_full_response(
+async fn fetch_with_full_response(
     method: String,
     url: String,
     headers: Option<HashMap<String, String>>,
     body: Option<String>,
 ) -> Result<ResponseData, String> {
-    let client = reqwest::blocking::Client::new();
-    let mut req = client.request(method.parse().unwrap_or(reqwest::Method::GET), &url);
+    let client = reqwest::Client::new();
+    let method = method.parse().unwrap_or(reqwest::Method::GET);
+    let mut req = client.request(method, &url);
 
-    if let Some(headers) = headers {
-        for (k, v) in headers {
+    if let Some(hdrs) = headers {
+        for (k, v) in hdrs {
             req = req.header(k, v);
         }
     }
@@ -41,7 +42,7 @@ fn fetch_with_full_response(
         req = req.body(body);
     }
 
-    let res = req.send().map_err(|e| e.to_string())?;
+    let res = req.send().await.map_err(|e| e.to_string())?;
 
     let status = res.status().as_u16();
     let status_text = res.status().canonical_reason().unwrap_or("").to_string();
@@ -53,7 +54,7 @@ fn fetch_with_full_response(
         .map(|(k, v)| (k.to_string(), v.to_str().unwrap_or("").to_string()))
         .collect();
 
-    let body = res.text().map_err(|e| e.to_string())?;
+    let body = res.text().await.map_err(|e| e.to_string())?;
 
     Ok(ResponseData {
         status,

@@ -103,7 +103,7 @@ Content-Type: application/json
     outputEditor?.dispose();
   });
 
-  async function logInput(event: Event) {
+  async function runRequests(event: Event) {
     event.preventDefault();
     loading = true;
 
@@ -182,7 +182,7 @@ Content-Type: application/json
   </div>
 
   <div class="actions">
-    <button on:click={logInput} disabled={loading}>
+    <button on:click={runRequests} disabled={loading}>
       {#if loading}
         ⏳ Executing...
       {:else}
