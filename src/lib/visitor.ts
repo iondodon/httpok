@@ -1,11 +1,12 @@
 import { SimpleLexer } from "./lexer.js";
 import { HttpParser } from "./parser.js";
+import { HttpOkRequest } from "./httpOkRequest.js";
 
 const parser = new HttpParser();
 const BaseVisitor = parser.getBaseCstVisitorConstructorWithDefaults();
 
 class Visitor extends BaseVisitor {
-  requests: Request[] = [];
+  requests: HttpOkRequest[] = [];
 
   constructor() {
     super();
@@ -37,9 +38,9 @@ class Visitor extends BaseVisitor {
       body = ctx.BodyLine.map((b: any) => b.image.slice(1)).join("\n");
     }
   
-    const req = new Request(url, {
+    const req = new HttpOkRequest(url, {
       method,
-      headers: new Headers(headers),
+      headers: headers,
       body: body ?? null,
     });
   
@@ -47,7 +48,7 @@ class Visitor extends BaseVisitor {
   }
 }
 
-export function parseRequests(code: string): Request[] {
+export function parseRequests(code: string): HttpOkRequest[] {
   // ennsure there is a newline at the end
   // this helps to have a simpler grammar
   code = code.endsWith("\n") ? code : code + "\n"

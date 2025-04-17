@@ -1,8 +1,8 @@
 <script lang="ts">
   import { onMount, onDestroy } from "svelte";
   import * as monaco from "monaco-editor";
-  import { registerHttpokLanguage } from "../lib/myLanguage";
-  import { SimpleLanguageService } from "../lib/SimpleLanguageService";
+  import { registerHttpOkLanguage } from "../lib/httpOkLanguage";
+  import { HttpOkLanguageService } from "../lib/httpOkLanguageService";
   import EditorWorker from "monaco-editor/esm/vs/editor/editor.worker?worker";
   import JsonWorker from "monaco-editor/esm/vs/language/json/json.worker?worker";
 
@@ -23,7 +23,7 @@
   let editor: monaco.editor.IStandaloneCodeEditor;
   let outputEditor: monaco.editor.IStandaloneCodeEditor;
 
-  const languageService = new SimpleLanguageService();
+  const languageService = new HttpOkLanguageService();
   const defaultText = `
 # httok https://github.com/iondodon/httpok licensed under GPLv3
 #
@@ -64,7 +64,7 @@ Content-Type: application/json
   let loading = false;
 
   onMount(async () => {
-    registerHttpokLanguage();
+    registerHttpOkLanguage();
 
     editor = monaco.editor.create(editorContainer, {
       value: defaultText,

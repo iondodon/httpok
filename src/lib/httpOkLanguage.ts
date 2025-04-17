@@ -1,12 +1,11 @@
 import * as monaco from "monaco-editor";
 
-export function registerHttpokLanguage() {
+export function registerHttpOkLanguage() {
   monaco.languages.register({ id: "httpok" });
 
   monaco.languages.setMonarchTokensProvider("httpok", {
     tokenizer: {
       root: [
-        // ✅ Comments FIRST so they take full priority
         [/^#.*$/, "comment"],
   
         // HTTP methods (styled like headers)
