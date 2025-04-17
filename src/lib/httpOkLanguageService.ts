@@ -28,8 +28,6 @@ export class HttpOkLanguageService {
       body: request.body ? String(request.body) : null,
     });
 
-    response.body = JSON.parse(response.body)
-
     return response;
   }
 }
