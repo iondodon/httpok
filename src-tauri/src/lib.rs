@@ -2,6 +2,11 @@
 
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
+use tauri::{
+    menu::{MenuBuilder, MenuItemBuilder, SubmenuBuilder},
+    Emitter, Manager, Wry,
+};
+use tauri_plugin_dialog::{DialogExt, FileDialogBuilder};
 
 #[derive(Deserialize)]
 pub struct HttpOkRequest {
@@ -69,11 +74,63 @@ async fn fetch_with_full_response(request: HttpOkRequest) -> Result<HttpOkFullRe
     })
 }
 
+#[tauri::command]
+async fn save_with_dialog(content: String, app: tauri::AppHandle<Wry>) -> Result<(), String> {
+    let file_dialog: FileDialogBuilder<Wry> = app.dialog().file();
+
+    let file_path = tauri::async_runtime::spawn_blocking(move || {
+        file_dialog
+            .set_title("Save .httpok file")
+            .add_filter("HttpOk", &["httpok"])
+            .blocking_save_file()
+    })
+    .await
+    .map_err(|e| e.to_string())?;
+
+    if let Some(path) = file_path.and_then(|f| f.as_path().map(|p| p.to_path_buf())) {
+        std::fs::write(path, content).map_err(|e| e.to_string())?;
+    }
+
+    Ok(())
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
         .plugin(tauri_plugin_opener::init())
-        .invoke_handler(tauri::generate_handler![greet, fetch_with_full_response])
+        .plugin(tauri_plugin_dialog::init())
+        .setup(|app| {
+            // Create the "Save" menu item
+            let save_item = MenuItemBuilder::new("Save")
+                .id("save")
+                .accelerator("CmdOrCtrl+S")
+                .build(app)?;
+
+            // Create the "File" submenu and add the "Save" item
+            let file_menu = SubmenuBuilder::new(app, "File").item(&save_item).build()?;
+
+            // Build the main menu and add the "File" submenu
+            let menu = MenuBuilder::new(app).items(&[&file_menu]).build()?;
+
+            // Set the menu for the application
+            app.set_menu(menu)?;
+
+            // Listen for menu events
+            app.on_menu_event(move |app_handle, event| {
+                if event.id() == "save" {
+                    if let Some(window) = app_handle.get_webview_window("main") {
+                        let _ = window.emit("menu-save", ());
+                    }
+                }
+            });
+
+            Ok(())
+        })
+        .invoke_handler(tauri::generate_handler![
+            greet,
+            fetch_with_full_response,
+            save_with_dialog
+        ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }

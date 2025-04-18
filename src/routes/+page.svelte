@@ -5,6 +5,8 @@
   import { HttpOkLanguageService } from "../lib/httpOkLanguageService";
   import EditorWorker from "monaco-editor/esm/vs/editor/editor.worker?worker";
   import JsonWorker from "monaco-editor/esm/vs/language/json/json.worker?worker";
+  import { listen } from "@tauri-apps/api/event";
+  import { invoke } from "@tauri-apps/api/core";
 
   // This must be before using monaco
   // Must be global before any monaco.editor.create
@@ -95,6 +97,11 @@ Content-Type: application/json
     requestAnimationFrame(() => {
       editor.layout();
       outputEditor.layout();
+    });
+
+    listen("menu-save", async () => {
+      const content = editor.getValue(); // Replace with your editor instance logic
+      await invoke("save_with_dialog", { content });
     });
   });
 
