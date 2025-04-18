@@ -94,6 +94,30 @@ async fn save_with_dialog(content: String, app: tauri::AppHandle<Wry>) -> Result
     Ok(())
 }
 
+async fn open_and_read_file(app: tauri::AppHandle<Wry>) -> Result<(), String> {
+    let file_dialog: FileDialogBuilder<Wry> = app.dialog().file();
+
+    let file_path = tauri::async_runtime::spawn_blocking(move || {
+        file_dialog
+            .set_title("Open .httpok file")
+            .add_filter("HttpOk", &["httpok"])
+            .blocking_pick_file()
+    })
+    .await
+    .map_err(|e| e.to_string())?;
+
+    if let Some(path) = file_path.and_then(|f| f.as_path().map(|p| p.to_path_buf())) {
+        let content = std::fs::read_to_string(path).map_err(|e| e.to_string())?;
+
+        // Send file content to frontend
+        if let Some(window) = app.get_webview_window("main") {
+            window.emit("file-opened", content).unwrap();
+        }
+    }
+
+    Ok(())
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
@@ -106,8 +130,15 @@ pub fn run() {
                 .accelerator("CmdOrCtrl+S")
                 .build(app)?;
 
+            let open_item = MenuItemBuilder::new("Open")
+                .id("open")
+                .accelerator("CmdOrCtrl+O")
+                .build(app)?;
+
             // Create the "File" submenu and add the "Save" item
-            let file_menu = SubmenuBuilder::new(app, "File").item(&save_item).build()?;
+            let file_menu = SubmenuBuilder::new(app, "File")
+                .items(&[&open_item, &save_item])
+                .build()?;
 
             // Build the main menu and add the "File" submenu
             let menu = MenuBuilder::new(app).items(&[&file_menu]).build()?;
@@ -121,6 +152,14 @@ pub fn run() {
                     if let Some(window) = app_handle.get_webview_window("main") {
                         let _ = window.emit("menu-save", ());
                     }
+                }
+                if event.id() == "open" {
+                    let app = app_handle.clone();
+                    tauri::async_runtime::spawn(async move {
+                        if let Err(e) = open_and_read_file(app).await {
+                            eprintln!("Open failed: {e}");
+                        }
+                    });
                 }
             });
 

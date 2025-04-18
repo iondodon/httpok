@@ -103,6 +103,11 @@ Content-Type: application/json
       const content = editor.getValue(); // Replace with your editor instance logic
       await invoke("save_with_dialog", { content });
     });
+
+    listen("file-opened", (event) => {
+      const content = event.payload as string;
+      editor.setValue(content); // 👈 loads file content into the editor
+    });
   });
 
   onDestroy(() => {
