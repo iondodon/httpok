@@ -125,12 +125,12 @@ pub fn run() {
         .plugin(tauri_plugin_dialog::init())
         .setup(|app| {
             // Create the "Save" menu item
-            let save_item = MenuItemBuilder::new("Save")
+            let save_item = MenuItemBuilder::new("Save .httpok file")
                 .id("save")
                 .accelerator("CmdOrCtrl+S")
                 .build(app)?;
 
-            let open_item = MenuItemBuilder::new("Open")
+            let open_item = MenuItemBuilder::new("Open .httpok file")
                 .id("open")
                 .accelerator("CmdOrCtrl+O")
                 .build(app)?;
