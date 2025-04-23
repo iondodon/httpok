@@ -25,6 +25,85 @@
   let editor: monaco.editor.IStandaloneCodeEditor;
   let outputEditor: monaco.editor.IStandaloneCodeEditor;
 
+  // Track zoom levels
+  let editorZoomLevel = 14;
+  let outputEditorZoomLevel = 14;
+
+  // Function to adjust zoom level
+  function adjustZoom(
+    editor: monaco.editor.IStandaloneCodeEditor,
+    currentLevel: number,
+    delta: number
+  ): number {
+    const newSize = Math.max(8, Math.min(30, currentLevel + delta));
+    editor.updateOptions({ fontSize: newSize });
+    return newSize;
+  }
+
+  // Handle zoom for input editor
+  function handleInputEditorWheel(event: WheelEvent) {
+    if (event.ctrlKey || event.metaKey) {
+      event.preventDefault();
+      event.stopPropagation();
+      const delta = event.deltaY > 0 ? -1 : 1;
+      editorZoomLevel = adjustZoom(editor, editorZoomLevel, delta);
+    }
+  }
+
+  // Handle zoom for output editor
+  function handleOutputEditorWheel(event: WheelEvent) {
+    if (event.ctrlKey || event.metaKey) {
+      event.preventDefault();
+      event.stopPropagation();
+      const delta = event.deltaY > 0 ? -1 : 1;
+      outputEditorZoomLevel = adjustZoom(
+        outputEditor,
+        outputEditorZoomLevel,
+        delta
+      );
+    }
+  }
+
+  // Handle keyboard shortcuts
+  function handleKeyboard(event: KeyboardEvent) {
+    if (event.ctrlKey || event.metaKey) {
+      const target = event.target as HTMLElement;
+      const isInputEditor = editor?.getDomNode()?.contains(target);
+      const isOutputEditor = outputEditor?.getDomNode()?.contains(target);
+
+      if (isInputEditor || isOutputEditor) {
+        const currentEditor = isInputEditor ? editor : outputEditor;
+        const currentZoomLevel = isInputEditor
+          ? editorZoomLevel
+          : outputEditorZoomLevel;
+
+        if (event.key === "=" || (event.key === "+" && event.shiftKey)) {
+          event.preventDefault();
+          if (isInputEditor) {
+            editorZoomLevel = adjustZoom(currentEditor, currentZoomLevel, 1);
+          } else {
+            outputEditorZoomLevel = adjustZoom(
+              currentEditor,
+              currentZoomLevel,
+              1
+            );
+          }
+        } else if (event.key === "-") {
+          event.preventDefault();
+          if (isInputEditor) {
+            editorZoomLevel = adjustZoom(currentEditor, currentZoomLevel, -1);
+          } else {
+            outputEditorZoomLevel = adjustZoom(
+              currentEditor,
+              currentZoomLevel,
+              -1
+            );
+          }
+        }
+      }
+    }
+  }
+
   const languageService = new HttpOkLanguageService();
   const defaultText = `
 # httok https://github.com/iondodon/httpok licensed under GPLv3
@@ -68,30 +147,68 @@ Content-Type: application/json
   onMount(async () => {
     registerHttpOkLanguage();
 
-    editor = monaco.editor.create(editorContainer, {
-      value: defaultText,
-      language: "httpok",
+    // Create separate editor instances with their own configurations
+    const commonEditorOptions = {
       theme: "vs-dark",
       automaticLayout: true,
       fontSize: 14,
-      wordWrap: "on",
+      wordWrap: "on" as const,
       minimap: { enabled: false },
       scrollBeyondLastLine: false,
       padding: { top: 10, bottom: 10 },
+      mouseWheelZoom: false,
+    };
+
+    editor = monaco.editor.create(editorContainer, {
+      ...commonEditorOptions,
+      value: defaultText,
+      language: "httpok",
     });
 
     outputEditor = monaco.editor.create(outputEditorContainer, {
+      ...commonEditorOptions,
       value: "",
       language: "json",
       readOnly: true,
-      theme: "vs-dark",
-      automaticLayout: true,
-      fontSize: 14,
-      wordWrap: "on",
-      minimap: { enabled: false },
-      scrollBeyondLastLine: false,
-      padding: { top: 10, bottom: 10 },
     });
+
+    // Add zoom handlers to the editor viewports
+    const inputViewportContainer = editor
+      .getDomNode()
+      ?.querySelector(".monaco-scrollable-element") as HTMLElement;
+    if (inputViewportContainer) {
+      inputViewportContainer.addEventListener("wheel", handleInputEditorWheel, {
+        passive: false,
+      });
+    }
+
+    const outputViewportContainer = outputEditor
+      .getDomNode()
+      ?.querySelector(".monaco-scrollable-element") as HTMLElement;
+    if (outputViewportContainer) {
+      outputViewportContainer.addEventListener(
+        "wheel",
+        handleOutputEditorWheel,
+        { passive: false }
+      );
+    }
+
+    // Add keyboard event listener
+    document.addEventListener("keydown", handleKeyboard);
+
+    // Reset zoom with Ctrl/Cmd + 0
+    editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.Digit0, () => {
+      editor.updateOptions({ fontSize: 14 });
+      editorZoomLevel = 14;
+    });
+
+    outputEditor.addCommand(
+      monaco.KeyMod.CtrlCmd | monaco.KeyCode.Digit0,
+      () => {
+        outputEditor.updateOptions({ fontSize: 14 });
+        outputEditorZoomLevel = 14;
+      }
+    );
 
     // Layout them once after mount
     requestAnimationFrame(() => {
@@ -100,17 +217,34 @@ Content-Type: application/json
     });
 
     listen("menu-save", async () => {
-      const content = editor.getValue(); // Replace with your editor instance logic
+      const content = editor.getValue();
       await invoke("save_with_dialog", { content });
     });
 
     listen("file-opened", (event) => {
       const content = event.payload as string;
-      editor.setValue(content); // 👈 loads file content into the editor
+      editor.setValue(content);
     });
   });
 
   onDestroy(() => {
+    const inputViewportContainer = editor
+      ?.getDomNode()
+      ?.querySelector(".monaco-scrollable-element") as HTMLElement;
+    const outputViewportContainer = outputEditor
+      ?.getDomNode()
+      ?.querySelector(".monaco-scrollable-element") as HTMLElement;
+
+    inputViewportContainer?.removeEventListener(
+      "wheel",
+      handleInputEditorWheel
+    );
+    outputViewportContainer?.removeEventListener(
+      "wheel",
+      handleOutputEditorWheel
+    );
+    document.removeEventListener("keydown", handleKeyboard);
+
     editor?.dispose();
     outputEditor?.dispose();
   });
