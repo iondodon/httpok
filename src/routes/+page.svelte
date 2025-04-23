@@ -29,7 +29,7 @@
   const defaultText = `
 # httok https://github.com/iondodon/httpok licensed under GPLv3
 #
-# Comments are allowed after the first request, between requests, and after the last request.
+# Comments are allowed after the before the first request, between requests, and after the last request.
 # Empty lines are not allowed between headers or between the URL line and the first defined header.
 # Empty lines are allowed between the last defined header of a request and its body.
 # Lines defining the request body should start with a '|'.
