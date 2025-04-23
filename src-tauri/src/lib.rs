@@ -18,6 +18,8 @@ pub struct HttpOkRequest {
 
 #[derive(Serialize)]
 pub struct HttpOkFullResponse {
+    #[serde(rename = "durationMiliseconds")]
+    pub duration_miliseconds: f64,
     pub status: u16,
 
     #[serde(rename = "statusText")]
@@ -50,7 +52,9 @@ async fn fetch_with_full_response(request: HttpOkRequest) -> Result<HttpOkFullRe
         req = req.body(body);
     }
 
+    let start = std::time::Instant::now();
     let res = req.send().await.map_err(|e| e.to_string())?;
+    let duration_miliseconds = start.elapsed().as_secs_f64() * 1000.0;
 
     let status = res.status().as_u16();
     let status_text = res.status().canonical_reason().unwrap_or("").to_string();
@@ -65,6 +69,7 @@ async fn fetch_with_full_response(request: HttpOkRequest) -> Result<HttpOkFullRe
     let body = res.text().await.map_err(|e| e.to_string())?;
 
     Ok(HttpOkFullResponse {
+        duration_miliseconds,
         status,
         status_text,
         url,

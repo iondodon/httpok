@@ -10,11 +10,8 @@ export class HttpOkLanguageService {
     const requests = parseRequests(input);
 
     for (const request of requests) {
-      const start = performance.now();
-      const respData = await this.fetchWithFullResponse(request);
-      const end = performance.now();
-      const duration = end - start;
-      responses.push({ duration, ...respData });
+      const response = await this.fetchWithFullResponse(request);
+      responses.push(response);
     }
 
     return responses;
