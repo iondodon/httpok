@@ -157,6 +157,7 @@ Content-Type: application/json
       scrollBeyondLastLine: false,
       padding: { top: 10, bottom: 10 },
       mouseWheelZoom: false,
+      links: false, // Disable URL underlines
     };
 
     editor = monaco.editor.create(editorContainer, {

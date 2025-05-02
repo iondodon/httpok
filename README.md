@@ -10,6 +10,12 @@
 
 **httpok** is a fast, minimalistic desktop HTTP client built with Tauri and SvelteKit. It lets you compose and test HTTP requests in a code editor interface, offering a lightweight alternative to tools like Postman or Insomnia.
 
+### Installation from Releases
+
+Pre-built binaries are available for download from the [Releases page](https://github.com/iondodon/httpok/releases). Choose the appropriate package for your operating system.
+
+After downloading, simply run the installer and follow the on-screen instructions.
+
 ---
 
 ## Features
