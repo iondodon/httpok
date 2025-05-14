@@ -166,6 +166,39 @@ Content-Type: application/json
       language: "httpok",
     });
 
+    // Add paste handler for request body formatting
+    editor.onDidPaste((e) => {
+      const model = editor.getModel();
+      if (!model) return;
+
+      // Get the full range of the pasted content
+      const startLineNumber = e.range.startLineNumber;
+      const endLineNumber = e.range.endLineNumber;
+
+      // Check if we're in a request body context (line starts with |)
+      const currentLine = model.getLineContent(startLineNumber);
+      if (currentLine.trim().startsWith("|")) {
+        const changes = [];
+
+        // Process each line in the pasted content
+        for (let i = startLineNumber; i <= endLineNumber; i++) {
+          const line = model.getLineContent(i);
+          if (!line.startsWith("|")) {
+            // Keep the content exactly as is, just add | at the start
+            changes.push({
+              range: new monaco.Range(i, 1, i, line.length + 1),
+              text: `|${line}`,
+            });
+          }
+        }
+
+        // Apply all changes in a single edit operation
+        if (changes.length > 0) {
+          model.pushEditOperations([], changes, () => null);
+        }
+      }
+    });
+
     outputEditor = monaco.editor.create(outputEditorContainer, {
       ...commonEditorOptions,
       value: "",

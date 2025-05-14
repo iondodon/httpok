@@ -35,5 +35,15 @@ export function registerHttpOkLanguage() {
     },
     autoClosingPairs: [],
     surroundingPairs: [],
+    onEnterRules: [
+      {
+        // When pressing Enter in a line that starts with | (possibly with whitespace before it)
+        beforeText: /^[\s]*\|.*$/,
+        action: {
+          indentAction: monaco.languages.IndentAction.None,
+          appendText: '|'
+        }
+      }
+    ]
   });
 }
