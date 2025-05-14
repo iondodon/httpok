@@ -3,6 +3,7 @@ export class HttpOkRequest {
     url: string;
     headers?: Record<string, string>;
     body?: string | null;
+    isMultipart: boolean;
   
     constructor(
       url: string,
@@ -20,6 +21,7 @@ export class HttpOkRequest {
       this.method = method;
       this.headers = headers;
       this.body = body ?? null;
+      this.isMultipart = headers?.['Content-Type']?.toLowerCase().includes('multipart/form-data') ?? false;
     }
    
     toSerializable(): object {
@@ -28,6 +30,7 @@ export class HttpOkRequest {
         url: this.url,
         headers: this.headers ?? {},
         body: this.body,
+        is_multipart: this.isMultipart,
       };
     }
   }

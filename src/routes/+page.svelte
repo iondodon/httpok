@@ -106,32 +106,26 @@
 
   const languageService = new HttpOkLanguageService();
   const defaultText = `
-# httok https://github.com/iondodon/httpok licensed under GPLv3
+# httok https://github.com/iondodon/httpok licensed under GPLv3 @ Ion Dodon
 #
 # Comments are allowed after the before the first request, between requests, and after the last request.
 # Empty lines are not allowed between headers or between the URL line and the first defined header.
 # Empty lines are allowed between the last defined header of a request and its body.
 # Lines defining the request body should start with a '|'.
-#
-# Examples:
-# GET https://jsonplaceholder.typicode.com/posts/1
-# Accept: application/json
-# Authorization: Bearer test123
-#
-# POST https://jsonplaceholder.typicode.com/posts
-# Content-Type: application/json
-# |{
-# |  "title": "foo",
-# |  "body": "bar",
-# |  "userId": 1
-# |}
-#
 # Highlight the request or requests you want to execute, then click Execute.
 # If nothing is highlighted, all requests will be executed one after another.
+
+# Examples:
 
 GET https://jsonplaceholder.typicode.com/posts/1
 Accept: application/json
 Authorization: Bearer test123
+
+# file=@path means a file upload from the given path
+# you have to add Content-Type: multipart/form-data for file uploads
+POST https://httpbin.org/post
+Content-Type: multipart/form-data
+|file=@/home/ion/go.mod
 
 POST https://jsonplaceholder.typicode.com/posts
 Content-Type: application/json

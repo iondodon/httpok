@@ -1,12 +1,16 @@
 // Learn more about Tauri commands at https://tauri.app/develop/calling-rust/
 
+use reqwest::multipart::{Form, Part};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
+use std::path::Path;
 use tauri::{
     menu::{MenuBuilder, MenuItemBuilder, SubmenuBuilder},
     Emitter, Manager, Wry,
 };
 use tauri_plugin_dialog::{DialogExt, FileDialogBuilder};
+use tokio::fs::File;
+use tokio::io::AsyncReadExt;
 
 #[derive(Deserialize)]
 pub struct HttpOkRequest {
@@ -14,6 +18,7 @@ pub struct HttpOkRequest {
     pub url: String,
     pub headers: Option<HashMap<String, String>>,
     pub body: Option<String>,
+    pub is_multipart: Option<bool>,
 }
 
 #[derive(Serialize)]
@@ -44,12 +49,51 @@ async fn fetch_with_full_response(request: HttpOkRequest) -> Result<HttpOkFullRe
 
     if let Some(headers) = request.headers {
         for (k, v) in headers {
-            req = req.header(k, v);
+            if k.to_lowercase() != "content-type" || !request.is_multipart.unwrap_or(false) {
+                req = req.header(k, v);
+            }
         }
     }
 
     if let Some(body) = request.body {
-        req = req.body(body);
+        if request.is_multipart.unwrap_or(false) {
+            let mut form = Form::new();
+            println!("file upload: {}", body);
+
+            // Parse the body for file uploads
+            for line in body.lines() {
+                if let Some((key, value)) = line.split_once('=') {
+                    if value.starts_with("@") {
+                        // This is a file upload
+                        let file_path = &value[1..]; // Remove the @ prefix
+                        let path = Path::new(file_path);
+
+                        if !path.exists() {
+                            return Err(format!("File not found: {}", file_path));
+                        }
+
+                        let mut file = File::open(path).await.map_err(|e| e.to_string())?;
+                        let mut contents = Vec::new();
+                        file.read_to_end(&mut contents)
+                            .await
+                            .map_err(|e| e.to_string())?;
+
+                        let file_name = path.file_name().and_then(|n| n.to_str()).unwrap_or("file");
+
+                        let part = Part::bytes(contents).file_name(file_name.to_string());
+
+                        form = form.part(key.trim().to_string(), part);
+                    } else {
+                        // This is a regular field
+                        form = form.text(key.trim().to_string(), value.trim().to_string());
+                    }
+                }
+            }
+            req = req.multipart(form);
+        } else {
+            println!("body: {}", body);
+            req = req.body(body);
+        }
     }
 
     let start = std::time::Instant::now();
