@@ -144,6 +144,51 @@ Content-Type: application/json
 
   let loading = false;
 
+  // Function to find request body ranges
+  function findRequestBodyRanges(model: monaco.editor.ITextModel) {
+    const lineCount = model.getLineCount();
+    const ranges: { startLineNumber: number; endLineNumber: number }[] = [];
+    let currentBodyStart: number | null = null;
+
+    for (let i = 1; i <= lineCount; i++) {
+      const line = model.getLineContent(i);
+      if (line.startsWith("|")) {
+        if (currentBodyStart === null) {
+          currentBodyStart = i;
+        }
+      } else if (currentBodyStart !== null) {
+        ranges.push({
+          startLineNumber: currentBodyStart,
+          endLineNumber: i - 1,
+        });
+        currentBodyStart = null;
+      }
+    }
+
+    // Handle case where body extends to end of file
+    if (currentBodyStart !== null) {
+      ranges.push({
+        startLineNumber: currentBodyStart,
+        endLineNumber: lineCount,
+      });
+    }
+
+    return ranges;
+  }
+
+  // Function to add folding markers
+  function setupFoldingRanges(model: monaco.editor.ITextModel) {
+    const foldingRanges = findRequestBodyRanges(model)
+      .filter((range) => range.endLineNumber > range.startLineNumber) // Only add folding for multi-line bodies
+      .map((range) => ({
+        start: range.startLineNumber,
+        end: range.endLineNumber,
+        kind: monaco.languages.FoldingRangeKind.Region,
+      }));
+
+    return foldingRanges;
+  }
+
   onMount(async () => {
     registerHttpOkLanguage();
 
@@ -158,12 +203,22 @@ Content-Type: application/json
       padding: { top: 10, bottom: 10 },
       mouseWheelZoom: false,
       links: false, // Disable URL underlines
+      folding: true, // Enable folding
+      foldingStrategy: "auto" as const,
+      foldingHighlight: true,
     };
 
     editor = monaco.editor.create(editorContainer, {
       ...commonEditorOptions,
       value: defaultText,
       language: "httpok",
+    });
+
+    // Register folding range provider
+    monaco.languages.registerFoldingRangeProvider("httpok", {
+      provideFoldingRanges: (model, context, token) => {
+        return setupFoldingRanges(model);
+      },
     });
 
     // Add paste handler for request body formatting

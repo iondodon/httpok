@@ -44,6 +44,12 @@ export function registerHttpOkLanguage() {
           appendText: '|'
         }
       }
-    ]
+    ],
+    folding: {
+      markers: {
+        start: /^\|.*$/,
+        end: /^(?!\|).*$/
+      }
+    }
   });
 }
