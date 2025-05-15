@@ -208,6 +208,47 @@ Content-Type: application/json
       language: "httpok",
     });
 
+    // Handle backspace in request body lines
+    editor.onKeyDown((e) => {
+      const model = editor.getModel();
+      if (!model) return;
+
+      // Only handle backspace
+      if (e.browserEvent.key !== "Backspace") return;
+
+      const position = editor.getPosition();
+      if (!position) return;
+
+      // Only handle when cursor is at column 2 (right after |)
+      if (position.column !== 2) return;
+
+      const currentLine = model.getLineContent(position.lineNumber);
+      if (!currentLine.startsWith("|")) return;
+
+      // Get the previous line
+      const prevLineNumber = position.lineNumber - 1;
+      if (prevLineNumber < 1) return;
+
+      // Prevent default backspace behavior
+      e.preventDefault();
+      e.stopPropagation();
+
+      // Use editor.executeEdits for better operation handling
+      editor.executeEdits("backspace-handler", [
+        {
+          range: new monaco.Range(
+            prevLineNumber,
+            model.getLineMaxColumn(prevLineNumber),
+            position.lineNumber,
+            currentLine.length + 1
+          ),
+          text: currentLine.slice(1), // Remove the |
+        },
+      ]);
+
+      // The cursor will automatically be placed at the correct position
+    });
+
     // Register folding range provider
     monaco.languages.registerFoldingRangeProvider("httpok", {
       provideFoldingRanges: (model, context, token) => {
