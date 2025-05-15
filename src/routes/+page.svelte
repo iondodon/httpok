@@ -250,6 +250,16 @@ Content-Type: application/json
     const model = editor.getModel();
     if (!model) return;
 
+    // Select the request
+    editor.setSelection(
+      new monaco.Range(startLine, 1, endLine, model.getLineMaxColumn(endLine))
+    );
+
+    // Reveal the selection in the editor (scroll to it if needed)
+    editor.revealRangeInCenter(
+      new monaco.Range(startLine, 1, endLine, model.getLineMaxColumn(endLine))
+    );
+
     loading = true;
     try {
       const requestText = model.getValueInRange(
