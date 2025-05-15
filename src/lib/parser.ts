@@ -60,16 +60,15 @@ export class HttpParser extends CstParser {
         $.CONSUME4(Newline);
       });
     
-      $.MANY5(() => {
-        $.CONSUME5(Newline);
-      });
-    
       $.OPTION(() => {
         $.SUBRULE($.requestBody);
       });
     
       $.MANY7(() => {
-        $.CONSUME7(Newline);
+        $.OR7([
+          { ALT: () => $.SUBRULE7($.commentBlock) },
+          { ALT: () => $.CONSUME7(Newline) }
+        ]);
       });
     }); 
 

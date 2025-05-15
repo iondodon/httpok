@@ -3,6 +3,7 @@
   import * as monaco from "monaco-editor";
   import { registerHttpOkLanguage } from "../lib/httpOkLanguage";
   import { HttpOkLanguageService } from "../lib/httpOkLanguageService";
+  import { parseRequests } from "../lib/visitor";
   import EditorWorker from "monaco-editor/esm/vs/editor/editor.worker?worker";
   import JsonWorker from "monaco-editor/esm/vs/language/json/json.worker?worker";
   import { listen } from "@tauri-apps/api/event";
@@ -28,6 +29,9 @@
   // Track zoom levels
   let editorZoomLevel = 14;
   let outputEditorZoomLevel = 14;
+
+  // Track decorations for gutter buttons
+  let gutterDecorations: string[] = [];
 
   // Function to adjust zoom level
   function adjustZoom(
@@ -110,7 +114,7 @@
 #
 # Comments are allowed after and before the first request, between requests, and after the last request.
 # Empty lines are not allowed between headers or between the URL line and the first defined header.
-# Empty lines are allowed between the last defined header of a request and its body.
+# Empty lines are not allowed between the last defined header and the request body.
 # Request bodies are specified between --- delimiters.
 # Highlight the request or requests you want to execute, then click Execute.
 # If nothing is highlighted, all requests will be executed one after another.
@@ -176,6 +180,91 @@ Content-Type: application/json
     return findFoldingRanges(model);
   }
 
+  // Function to find request ranges in the editor
+  function findRequestRanges(model: monaco.editor.ITextModel) {
+    const lineCount = model.getLineCount();
+    const ranges: { startLine: number; endLine: number }[] = [];
+    let currentRequestStart: number | null = null;
+
+    for (let i = 1; i <= lineCount; i++) {
+      const line = model.getLineContent(i).trim();
+
+      // Start of a request is a line starting with GET, POST, PUT, DELETE, PATCH
+      if (/^(GET|POST|PUT|DELETE|PATCH)\s+/i.test(line)) {
+        if (currentRequestStart !== null) {
+          // End previous request
+          ranges.push({ startLine: currentRequestStart, endLine: i - 1 });
+        }
+        currentRequestStart = i;
+      }
+
+      // Empty line or comment could be end of request
+      if (
+        currentRequestStart !== null &&
+        (line === "" || line.startsWith("#"))
+      ) {
+        ranges.push({ startLine: currentRequestStart, endLine: i - 1 });
+        currentRequestStart = null;
+      }
+    }
+
+    // Handle last request if exists
+    if (currentRequestStart !== null) {
+      ranges.push({ startLine: currentRequestStart, endLine: lineCount });
+    }
+
+    return ranges;
+  }
+
+  // Function to update gutter decorations
+  function updateGutterDecorations() {
+    if (!editor) return;
+
+    const model = editor.getModel();
+    if (!model) return;
+
+    // Clear existing decorations
+    editor.deltaDecorations(gutterDecorations, []);
+
+    // Find all request ranges
+    const ranges = findRequestRanges(model);
+
+    // Create new decorations
+    const newDecorations = ranges.map((range) => ({
+      range: new monaco.Range(range.startLine, 1, range.startLine, 1),
+      options: {
+        isWholeLine: true,
+        glyphMarginClassName: "execute-request-button",
+        glyphMarginHoverMessage: { value: "Execute this request" },
+      },
+    }));
+
+    // Apply new decorations
+    gutterDecorations = editor.deltaDecorations([], newDecorations);
+  }
+
+  // Function to execute a single request
+  async function runSingleRequest(startLine: number, endLine: number) {
+    if (!editor) return;
+
+    const model = editor.getModel();
+    if (!model) return;
+
+    loading = true;
+    try {
+      const requestText = model.getValueInRange(
+        new monaco.Range(startLine, 1, endLine, model.getLineMaxColumn(endLine))
+      );
+      const responses = await languageService.execute(requestText);
+      outputEditor.setValue(JSON.stringify(responses, null, 2));
+    } catch (err) {
+      outputEditor.setValue(`❌ Error:\n${err}`);
+      console.error(err);
+    } finally {
+      loading = false;
+    }
+  }
+
   onMount(async () => {
     registerHttpOkLanguage();
 
@@ -193,6 +282,7 @@ Content-Type: application/json
       folding: true, // Enable folding
       foldingStrategy: "auto" as const,
       foldingHighlight: true,
+      glyphMargin: true, // Enable gutter for request execution buttons
     };
 
     editor = monaco.editor.create(editorContainer, {
@@ -350,6 +440,34 @@ Content-Type: application/json
       const content = event.payload as string;
       editor.setValue(content);
     });
+
+    // Add click handler for gutter buttons
+    editor.onMouseDown((e) => {
+      if (e.target.type === monaco.editor.MouseTargetType.GUTTER_GLYPH_MARGIN) {
+        const lineNumber = e.target.position?.lineNumber;
+        if (!lineNumber) return;
+
+        const model = editor.getModel();
+        if (!model) return;
+
+        const ranges = findRequestRanges(model);
+        const targetRange = ranges.find(
+          (range) => range.startLine === lineNumber
+        );
+
+        if (targetRange) {
+          runSingleRequest(targetRange.startLine, targetRange.endLine);
+        }
+      }
+    });
+
+    // Update gutter decorations when content changes
+    editor.onDidChangeModelContent(() => {
+      updateGutterDecorations();
+    });
+
+    // Initial decoration update
+    updateGutterDecorations();
   });
 
   onDestroy(() => {
@@ -546,5 +664,16 @@ Content-Type: application/json
     .drag-handle:hover {
       background-color: #777;
     }
+  }
+
+  :global(.execute-request-button) {
+    background: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%2375b798'><path d='M8 5v14l11-7z'/></svg>")
+      center center no-repeat;
+    cursor: pointer;
+  }
+
+  :global(.execute-request-button:hover) {
+    background: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%2390ceb0'><path d='M8 5v14l11-7z'/></svg>")
+      center center no-repeat;
   }
 </style>
