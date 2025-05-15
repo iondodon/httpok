@@ -143,48 +143,37 @@ Content-Type: application/json
   let loading = false;
 
   // Function to find request body ranges
-  function findRequestBodyRanges(model: monaco.editor.ITextModel) {
+  function findFoldingRanges(model: monaco.editor.ITextModel) {
     const lineCount = model.getLineCount();
-    const ranges: { startLineNumber: number; endLineNumber: number }[] = [];
-    let currentBodyStart: number | null = null;
+    const ranges: { start: number; end: number }[] = [];
+    let bodyStart: number | null = null;
 
     for (let i = 1; i <= lineCount; i++) {
-      const line = model.getLineContent(i);
-      if (line.startsWith("|")) {
-        if (currentBodyStart === null) {
-          currentBodyStart = i;
-        }
-      } else if (currentBodyStart !== null) {
-        ranges.push({
-          startLineNumber: currentBodyStart,
-          endLineNumber: i - 1,
-        });
-        currentBodyStart = null;
-      }
-    }
+      const line = model.getLineContent(i).trim();
 
-    // Handle case where body extends to end of file
-    if (currentBodyStart !== null) {
-      ranges.push({
-        startLineNumber: currentBodyStart,
-        endLineNumber: lineCount,
-      });
+      if (line === "---") {
+        if (bodyStart === null) {
+          bodyStart = i + 1; // Start after the delimiter
+        } else {
+          // End the body range before the closing delimiter
+          if (i - bodyStart > 1) {
+            // Only create range if body has multiple lines
+            ranges.push({
+              start: bodyStart,
+              end: i - 1,
+            });
+          }
+          bodyStart = null;
+        }
+      }
     }
 
     return ranges;
   }
 
-  // Function to add folding markers
+  // Function to setup folding ranges
   function setupFoldingRanges(model: monaco.editor.ITextModel) {
-    const foldingRanges = findRequestBodyRanges(model)
-      .filter((range) => range.endLineNumber > range.startLineNumber) // Only add folding for multi-line bodies
-      .map((range) => ({
-        start: range.startLineNumber,
-        end: range.endLineNumber,
-        kind: monaco.languages.FoldingRangeKind.Region,
-      }));
-
-    return foldingRanges;
+    return findFoldingRanges(model);
   }
 
   onMount(async () => {
@@ -299,39 +288,6 @@ Content-Type: application/json
       provideFoldingRanges: (model, context, token) => {
         return setupFoldingRanges(model);
       },
-    });
-
-    // Add paste handler for request body formatting
-    editor.onDidPaste((e) => {
-      const model = editor.getModel();
-      if (!model) return;
-
-      // Get the full range of the pasted content
-      const startLineNumber = e.range.startLineNumber;
-      const endLineNumber = e.range.endLineNumber;
-
-      // Check if we're in a request body context (line starts with |)
-      const currentLine = model.getLineContent(startLineNumber);
-      if (currentLine.trim().startsWith("|")) {
-        const changes = [];
-
-        // Process each line in the pasted content
-        for (let i = startLineNumber; i <= endLineNumber; i++) {
-          const line = model.getLineContent(i);
-          if (!line.startsWith("|")) {
-            // Keep the content exactly as is, just add | at the start
-            changes.push({
-              range: new monaco.Range(i, 1, i, line.length + 1),
-              text: `|${line}`,
-            });
-          }
-        }
-
-        // Apply all changes in a single edit operation
-        if (changes.length > 0) {
-          model.pushEditOperations([], changes, () => null);
-        }
-      }
     });
 
     outputEditor = monaco.editor.create(outputEditorContainer, {
