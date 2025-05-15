@@ -19,6 +19,11 @@ class Visitor extends BaseVisitor {
     }
   }
 
+  requestBody(ctx: any) {
+    if (!ctx.BodyLine) return null;
+    return ctx.BodyLine.map((b: any) => b.image).join('\n');
+  }
+
   httpRequest(ctx: any) {
     const method = ctx.Method[0].image;
     const url = ctx.Url[0].image;
@@ -33,9 +38,8 @@ class Visitor extends BaseVisitor {
   
     let body: string | undefined = undefined;
   
-    if (ctx.BodyLine) {
-      // Remove the leading '|' and join lines with newline
-      body = ctx.BodyLine.map((b: any) => b.image.slice(1)).join("\n");
+    if (ctx.requestBody) {
+      body = this.visit(ctx.requestBody[0]);
     }
   
     const req = new HttpOkRequest(url, {
@@ -49,7 +53,7 @@ class Visitor extends BaseVisitor {
 }
 
 export function parseRequests(code: string): HttpOkRequest[] {
-  // ennsure there is a newline at the end
+  // ensure there is a newline at the end
   // this helps to have a simpler grammar
   code = code.endsWith("\n") ? code : code + "\n"
   const lex = SimpleLexer.tokenize(code);
