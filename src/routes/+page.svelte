@@ -106,14 +106,15 @@
 
   const languageService = new HttpOkLanguageService();
   const defaultText = `
-# httok https://github.com/iondodon/httpok licensed under GPLv3 @ Ion Dodon
+# httpok — https://github.com/iondodon/httpok — Licensed under GPLv3 © Ion Dodon
 #
-# Comments are allowed after the before the first request, between requests, and after the last request.
-# Empty lines are not allowed between headers or between the URL line and the first defined header.
-# Empty lines are allowed between the last defined header of a request and its body.
-# Lines defining the request body should start with a '|'.
-# Highlight the request or requests you want to execute, then click Execute.
-# If nothing is highlighted, all requests will be executed one after another.
+# Comments are allowed before the first request, between requests, and after the last request.
+# Empty lines are not allowed between headers, or between the URL line and the first header.
+# Empty lines are allowed between the last header of a request and its body.
+# Lines that define the request body should start with a '|'.
+# Highlight the request(s) you want to execute, then click "Execute".
+# If no request is highlighted, all requests will be executed sequentially.
+
 
 # Examples:
 
@@ -208,45 +209,86 @@ Content-Type: application/json
       language: "httpok",
     });
 
-    // Handle backspace in request body lines
+    // Handle automatic insertion and removal of | and # prefixes
     editor.onKeyDown((e) => {
       const model = editor.getModel();
       if (!model) return;
 
-      // Only handle backspace
-      if (e.browserEvent.key !== "Backspace") return;
+      if (e.browserEvent.key === "Enter") {
+        const position = editor.getPosition();
+        if (!position) return;
 
-      const position = editor.getPosition();
-      if (!position) return;
+        const currentLine = model.getLineContent(position.lineNumber);
 
-      // Only handle when cursor is at column 2 (right after |)
-      if (position.column !== 2) return;
+        // Check if we're in a request body or comment line
+        if (currentLine.startsWith("|") || currentLine.startsWith("#")) {
+          e.preventDefault();
+          e.stopPropagation();
 
-      const currentLine = model.getLineContent(position.lineNumber);
-      if (!currentLine.startsWith("|")) return;
+          const prefix = currentLine.startsWith("|") ? "|" : "#";
+          const indent = currentLine.match(/^[|#]\s*/)?.[0] || prefix + " ";
 
-      // Get the previous line
-      const prevLineNumber = position.lineNumber - 1;
-      if (prevLineNumber < 1) return;
+          // If the cursor is in the middle of a line, split the content
+          const contentAfterCursor = currentLine.substring(position.column - 1);
+          const contentBeforeCursor = currentLine.substring(
+            0,
+            position.column - 1
+          );
 
-      // Prevent default backspace behavior
-      e.preventDefault();
-      e.stopPropagation();
+          editor.executeEdits("auto-prefix", [
+            {
+              range: new monaco.Range(
+                position.lineNumber,
+                1,
+                position.lineNumber,
+                currentLine.length + 1
+              ),
+              text: contentBeforeCursor + "\n" + indent + contentAfterCursor,
+            },
+          ]);
 
-      // Use editor.executeEdits for better operation handling
-      editor.executeEdits("backspace-handler", [
-        {
-          range: new monaco.Range(
-            prevLineNumber,
-            model.getLineMaxColumn(prevLineNumber),
-            position.lineNumber,
-            currentLine.length + 1
-          ),
-          text: currentLine.slice(1), // Remove the |
-        },
-      ]);
+          // Position cursor after the prefix on the new line
+          editor.setPosition({
+            lineNumber: position.lineNumber + 1,
+            column: indent.length + 1,
+          });
+        }
+      } else if (e.browserEvent.key === "Backspace") {
+        const position = editor.getPosition();
+        if (!position) return;
 
-      // The cursor will automatically be placed at the correct position
+        // Only handle when cursor is at column 2 (right after | or #)
+        if (position.column !== 2) return;
+
+        const currentLine = model.getLineContent(position.lineNumber);
+        const prefix = currentLine[0];
+        if (prefix !== "|" && prefix !== "#") return;
+
+        // Get the previous line
+        const prevLineNumber = position.lineNumber - 1;
+        if (prevLineNumber < 1) return;
+        const prevLine = model.getLineContent(prevLineNumber);
+
+        // Only join with previous line if it has the same prefix
+        if (!prevLine.startsWith(prefix)) return;
+
+        // Prevent default backspace behavior
+        e.preventDefault();
+        e.stopPropagation();
+
+        // Use editor.executeEdits for better operation handling
+        editor.executeEdits("backspace-handler", [
+          {
+            range: new monaco.Range(
+              prevLineNumber,
+              model.getLineMaxColumn(prevLineNumber),
+              position.lineNumber,
+              currentLine.length + 1
+            ),
+            text: currentLine.slice(1), // Remove the prefix
+          },
+        ]);
+      }
     });
 
     // Register folding range provider
