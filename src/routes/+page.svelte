@@ -106,7 +106,7 @@
 
   const languageService = new HttpOkLanguageService();
   const defaultText = `
-# httok https://github.com/iondodon/httpok licensed under GPLv3 @ Ion Dodon
+# httpok https://github.com/iondodon/httpok licensed under GPLv3 @ Ion Dodon
 #
 # Comments are allowed after the before the first request, between requests, and after the last request.
 # Empty lines are not allowed between headers or between the URL line and the first defined header.
