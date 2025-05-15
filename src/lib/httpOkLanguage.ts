@@ -3,6 +3,14 @@ import * as monaco from "monaco-editor";
 export function registerHttpOkLanguage() {
   monaco.languages.register({ id: "httpok" });
 
+  // Register custom theme that extends vs-dark
+  monaco.editor.defineTheme('httpokTheme', {
+    base: 'vs-dark',
+    inherit: true,
+    rules: [],
+    colors: {}
+  });
+
   monaco.languages.setMonarchTokensProvider("httpok", {
     defaultToken: "",
     tokenPostfix: ".httpok",
@@ -21,6 +29,12 @@ export function registerHttpOkLanguage() {
       root: [
         // Comments
         [/^#.*$/, "comment"],
+
+        // Numbers between triple dashes
+        [/---\s*(\d+)\s*---/, ["delimiter.dash", "number.special"]],
+
+        // Quoted strings
+        [/"([^"\\]|\\.)*"/, "string.quoted"],
 
         // HTTP methods
         [/\b(GET|POST|PUT|DELETE|PATCH|OPTIONS|HEAD)\b/, "type.identifier"],

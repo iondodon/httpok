@@ -181,7 +181,7 @@ Content-Type: application/json
 
     // Create separate editor instances with their own configurations
     const commonEditorOptions = {
-      theme: "vs-dark",
+      theme: "httpokTheme", // Use our custom dark theme
       automaticLayout: true,
       fontSize: 14,
       wordWrap: "on" as const,
