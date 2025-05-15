@@ -19,9 +19,6 @@ export function registerHttpOkLanguage() {
         [/:\s*/, "delimiter"],
         [/[^:\r\n]+$/, "string"],
   
-        // Body lines starting with |
-        [/^\|.*/, "string.body"],
-  
         // Whitespace
         [/[ \t\r\n]+/, "white"],
       ],
@@ -34,22 +31,6 @@ export function registerHttpOkLanguage() {
       lineComment: "#",
     },
     autoClosingPairs: [],
-    surroundingPairs: [],
-    onEnterRules: [
-      {
-        // When pressing Enter in a line that starts with | (possibly with whitespace before it)
-        beforeText: /^[\s]*\|.*$/,
-        action: {
-          indentAction: monaco.languages.IndentAction.None,
-          appendText: '|'
-        }
-      }
-    ],
-    folding: {
-      markers: {
-        start: /^\|.*$/,
-        end: /^(?!\|).*$/
-      }
-    }
+    surroundingPairs: []
   });
 }
