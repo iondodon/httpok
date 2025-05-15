@@ -5,7 +5,7 @@
 </p>
 
 <p align="center">
-  <img src="screenshot-v0.7.0.png" />
+  <img src="screenshot-v0.8.0.png" />
 </p>
 
 **httpok** is a fast, minimalistic desktop HTTP client built with Tauri and SvelteKit. It lets you compose and test HTTP requests in a code editor interface, offering a lightweight alternative to tools like Postman or Insomnia.
