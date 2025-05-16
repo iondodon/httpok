@@ -233,9 +233,11 @@ Content-Type: application/json
     const newDecorations = ranges.map((range) => ({
       range: new monaco.Range(range.startLine, 1, range.startLine, 1),
       options: {
-        isWholeLine: true,
+        isWholeLine: false,
         glyphMarginClassName: "execute-request-button",
         glyphMarginHoverMessage: { value: "Execute this request" },
+        stickiness:
+          monaco.editor.TrackedRangeStickiness.NeverGrowsWhenTypingAtEdges,
       },
     }));
 
