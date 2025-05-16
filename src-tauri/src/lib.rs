@@ -45,7 +45,13 @@ fn greet(name: &str) -> String {
 async fn fetch_with_full_response(request: HttpOkRequest) -> Result<HttpOkFullResponse, String> {
     let client = reqwest::Client::new();
     let method = request.method.parse().unwrap_or(reqwest::Method::GET);
+
+    // Create request builder with a fixed timeout of 30 seconds
     let mut req = client.request(method, &request.url);
+
+    // Fixed timeout of 30 seconds for all requests
+    const TIMEOUT_DURATION: std::time::Duration = std::time::Duration::from_secs(30);
+    req = req.timeout(TIMEOUT_DURATION);
 
     if let Some(headers) = request.headers {
         for (k, v) in headers {
@@ -97,7 +103,18 @@ async fn fetch_with_full_response(request: HttpOkRequest) -> Result<HttpOkFullRe
     }
 
     let start = std::time::Instant::now();
-    let res = req.send().await.map_err(|e| e.to_string())?;
+    let res = match req.send().await {
+        Ok(response) => response,
+        Err(e) => {
+            if e.is_timeout() {
+                return Err(format!(
+                    "Request timed out after {} seconds",
+                    TIMEOUT_DURATION.as_secs()
+                ));
+            }
+            return Err(e.to_string());
+        }
+    };
     let duration_miliseconds = start.elapsed().as_secs_f64() * 1000.0;
 
     let status = res.status().as_u16();
@@ -110,7 +127,15 @@ async fn fetch_with_full_response(request: HttpOkRequest) -> Result<HttpOkFullRe
         .map(|(k, v)| (k.to_string(), v.to_str().unwrap_or("").to_string()))
         .collect();
 
-    let body = res.text().await.map_err(|e| e.to_string())?;
+    let body = match tokio::time::timeout(TIMEOUT_DURATION, res.text()).await {
+        Ok(body_result) => body_result.map_err(|e| e.to_string())?,
+        Err(_) => {
+            return Err(format!(
+                "Response body read timed out after {} seconds",
+                TIMEOUT_DURATION.as_secs()
+            ))
+        }
+    };
 
     Ok(HttpOkFullResponse {
         duration_miliseconds,
