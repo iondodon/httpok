@@ -32,6 +32,7 @@
 
   // Track decorations for gutter buttons
   let gutterDecorations: string[] = [];
+  let currentHoveredRequest: number | null = null;
 
   // Function to adjust zoom level
   function adjustZoom(
@@ -217,7 +218,7 @@ Content-Type: application/json
   }
 
   // Function to update gutter decorations
-  function updateGutterDecorations() {
+  function updateGutterDecorations(hoveredLine: number | null = null) {
     if (!editor) return;
 
     const model = editor.getModel();
@@ -229,17 +230,26 @@ Content-Type: application/json
     // Find all request ranges
     const ranges = findRequestRanges(model);
 
-    // Create new decorations
-    const newDecorations = ranges.map((range) => ({
-      range: new monaco.Range(range.startLine, 1, range.startLine, 1),
-      options: {
-        isWholeLine: false,
-        glyphMarginClassName: "execute-request-button",
-        glyphMarginHoverMessage: { value: "Execute this request" },
-        stickiness:
-          monaco.editor.TrackedRangeStickiness.NeverGrowsWhenTypingAtEdges,
-      },
-    }));
+    // Create new decorations for each request
+    const newDecorations = ranges.map((range) => {
+      const isHovered =
+        hoveredLine !== null &&
+        hoveredLine >= range.startLine &&
+        hoveredLine <= range.endLine;
+
+      return {
+        range: new monaco.Range(range.startLine, 1, range.startLine, 1),
+        options: {
+          isWholeLine: false,
+          glyphMarginClassName: isHovered
+            ? "execute-request-button visible"
+            : "execute-request-button",
+          glyphMarginHoverMessage: { value: "Execute this request" },
+          stickiness:
+            monaco.editor.TrackedRangeStickiness.NeverGrowsWhenTypingAtEdges,
+        },
+      };
+    });
 
     // Apply new decorations
     gutterDecorations = editor.deltaDecorations([], newDecorations);
@@ -473,13 +483,20 @@ Content-Type: application/json
       }
     });
 
-    // Update gutter decorations when content changes
-    editor.onDidChangeModelContent(() => {
-      updateGutterDecorations();
+    // Add mouse move handler to track hover state
+    editor.onMouseMove((e) => {
+      const hoveredLine = e.target.position?.lineNumber;
+      if (hoveredLine !== currentHoveredRequest) {
+        currentHoveredRequest = hoveredLine || null;
+        updateGutterDecorations(currentHoveredRequest);
+      }
     });
 
-    // Initial decoration update
-    updateGutterDecorations();
+    // Reset hover state when mouse leaves the editor
+    editor.onMouseLeave(() => {
+      currentHoveredRequest = null;
+      updateGutterDecorations(null);
+    });
   });
 
   onDestroy(() => {
@@ -682,10 +699,22 @@ Content-Type: application/json
     background: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%2375b798'><path d='M8 5v14l11-7z'/></svg>")
       center center no-repeat;
     cursor: pointer;
+    opacity: 0;
+    transition: opacity 0.2s ease-in-out;
+  }
+
+  :global(.execute-request-button.visible),
+  :global(.execute-request-button:hover) {
+    opacity: 1;
   }
 
   :global(.execute-request-button:hover) {
     background: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%2390ceb0'><path d='M8 5v14l11-7z'/></svg>")
       center center no-repeat;
+  }
+
+  :global(.request-hover-area) {
+    background: transparent;
+    pointer-events: auto;
   }
 </style>
